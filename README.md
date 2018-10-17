@@ -18,9 +18,29 @@ Compiled version of the ec2-scheduler.py file with its dependencies
 The usage of the solution is the following:
 
 1. Upload the ec2-scheduler.zip to an s3 bucket
-2. Upload the CF template to CloudFormation, provide the name of the s3 bucket where you upload the .zip file and change the parameters as desired. The template will trigger the creation of a Lambda function that executes periodically and checks if any EC2 and RDS instances needs to be started or stopped
+2. Upload the CF template to CloudFormation, provide the name of the s3 bucket where you upload the .zip file and change the parameters as desired, including the possibility of enabling metrics in CloudWatch. The template will trigger the creation of a Lambda function that executes periodically and checks if any EC2 and RDS instances needs to be started or stopped
 3. Add tags to the desired instances as explained below
-4. You can check that the solution is working by checking the metrics on Cloudwatch
+4. You can check that the solution is working by checking the metrics on Cloudwatch, if you have chosen to enable them
+
+# Custom parameters
+
+| Parameter | Default | Notes|
+| ------ | ------ |------|
+|Schedule | 5 minutes | How often should the lambda function execute|
+|DefaultStartTime | 0800 | Default Time to start the tagged instances|
+|DefaultStopTime | 1800 | Default Time to stop the tagged instances|
+|DefaultDaysActive| 'mon','tue','wed','thu','fri' | You can specify which days the instances should be active, or just enter 'all' |
+|DefaultTimeZone | Europe/Zurich | Default time zone for the scheduler|
+|CustomTagName | scheduler:ec2-startstop | This tag identifies EC2 instances to receive automated actions|
+|CustomRDSTagName | scheduler:rds-startstop | This tag identifies RDS instances to receive automated actions|
+|CloudWatchMetrics| Disabled |  |
+|Regions | all | AWS regions seperated by space(s) where EC2/RDS scheduler operates|
+
+|RDSSupport | Yes| Change to 'No' to disable RDS instance stop/start support|
+
+|S3BucketName | | S3 Bucket name where Lambda zipfile sits|
+
+||  | |
 
 # How to use it
 
@@ -80,7 +100,7 @@ The following table gives examples of different tag values and the resulting Sch
 # Author
 - Initial version: AWS provided
 - Second version by: Eric Ho (https://github.com/hbwork/ec2-scheduler)
-- This version by: Pablo Pinés León
+- Current version by: Pablo Pinés León
 Last update: October 17, 2018
 
 ***
