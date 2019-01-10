@@ -11,4 +11,4 @@
             files:
               - ec2-scheduler.zip
               - packaged.yaml
-              - *.json
+              - '*.json'
