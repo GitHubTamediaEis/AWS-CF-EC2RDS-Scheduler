@@ -7,6 +7,7 @@
                 - zip -r -9 ../ec2-scheduler.zip *
             post_build:
               commands:
+                - echo $BucketName
                 - aws cloudformation package --template-file ec2-scheduler.yaml --s3-bucket $BucketName --output-template-file packaged.yaml
           artifacts:
             files:
