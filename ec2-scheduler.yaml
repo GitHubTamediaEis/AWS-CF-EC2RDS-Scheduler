@@ -1,7 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
-Description: 'Updated EC2/RDS Scheduler: This template installs an updated version
-  of AWS EC2 Scheduler for automatically starting and stopping EC2/RDS instances.'
+Description: 'EC2/RDS Scheduler: This template deploys a lambda for AWS EC2 Scheduler for automatically starting and stopping EC2/RDS instances based on tags'
 Parameters:
   Schedule:
     Description: Schedule for CWE Scheduled Expression
