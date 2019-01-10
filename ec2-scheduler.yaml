@@ -143,3 +143,15 @@ Resources:
           Type: Schedule
           Properties:
             Schedule: !Ref Schedule
+            Input: !Sub | 
+              {
+              "Regions":"${Regions}",
+              "CustomTagName":"${CustomTagName}",
+              "CustomRDSTagName":"${CustomRDSTagName}",
+              "DefaultStartTime":"${DefaultStartTime}",
+              "DefaultStopTime":"${DefaultStopTime}",
+              "DefaultTimeZone":"${DefaultTimeZone}",
+              "CloudWatchMetrics":"${CloudWatchMetrics}",
+              "DefaultDaysActive":"${DefaultDaysActive}",
+              "RDSSupport":"${RDSSupport}"
+              }
