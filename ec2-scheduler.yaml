@@ -130,11 +130,11 @@ Resources:
             - kms:CreateGrant
             Resource: "*"
   Ec2Scheduler:
-    Type: 'AWS::Serverless::Function'
+    Type: AWS::Serverless::Function
     Properties:
       Handler: ec2-scheduler.lambda_handler
       Timeout: 300
       MemorySize: 256
       Runtime:  python2.7
-      CodeUri: './ec2-scheduler.zip'
+      CodeUri: ec2-scheduler.zip
       Role: !GetAtt Role.Arn
