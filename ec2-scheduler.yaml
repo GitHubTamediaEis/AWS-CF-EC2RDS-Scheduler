@@ -1,4 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
 Description: 'Updated EC2/RDS Scheduler: This template installs an updated version
   of AWS EC2 Scheduler for automatically starting and stopping EC2/RDS instances.'
 Parameters:
@@ -92,17 +93,15 @@ Metadata:
       Parameters:
       - CloudWatchMetrics
 Resources:
-  ec2SchedulerRole:
-    Type: AWS::IAM::Role
+  Ec2Scheduler:
+    Type: 'AWS::Serverless::Function'
     Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service: lambda.amazonaws.com
-          Action: sts:AssumeRole
-      Path: "/"
+      Handler: ec2-scheduler.lambda_handler
+      Timeout: 300
+      MemorySize: 256
+      Runtime:  python2.7
+      CodeUri: './ec2-scheduler.zip'
+      Description: EC2 Scheduler Lambda function (supporting weekdays/monthdays) for automatically starting and stopping EC2 instances.
       Policies:
       - PolicyName: ec2SchedulerPermissions
         PolicyDocument:
@@ -128,40 +127,11 @@ Resources:
             - cloudformation:DescribeStacks
             - kms:CreateGrant
             Resource: "*"
-  ec2SchedulerOptIn:
-    Type: AWS::Lambda::Function
-    Properties:
-      Handler: ec2-scheduler.lambda_handler
-      Role:
-        Fn::GetAtt:
-        - ec2SchedulerRole
-        - Arn
-      Description: EC2 Scheduler Lambda function (supporting weekdays/monthdays) for
-        automatically starting and stopping EC2 instances.
-      Code:
-        S3Bucket:
-          Ref: S3BucketName
-        S3Key: ec2-scheduler.zip
-      Runtime: python2.7
-      Timeout: 300
-      MemorySize: 256
-  ScheduledRule:
-    Type: AWS::Events::Rule
-    Properties:
-      Description: Rule to trigger EC2Scheduler function on a schedule
-      ScheduleExpression:
-        Fn::FindInMap:
-        - Schedule
-        - Time
-        - Ref: Schedule
-      State: ENABLED
-      Targets:
-      - Arn:
-          Fn::GetAtt:
-          - ec2SchedulerOptIn
-          - Arn
-        Id: TargetFunctionV1
-        Input: !Sub | 
+      Events:
+      - Type: Schedule
+        Properties:
+          Schedule: !Ref Schedule
+          Input: !Sub | 
           {
           "Regions":"${Regions}",
           "CustomTagName":"${CustomTagName}",
@@ -173,14 +143,3 @@ Resources:
           "DefaultDaysActive":"${DefaultDaysActive}",
           "RDSSupport":"${RDSSupport}"
           }
-  PermissionForEventsToInvokeLambda:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName:
-        Ref: ec2SchedulerOptIn
-      Action: lambda:InvokeFunction
-      Principal: events.amazonaws.com
-      SourceArn:
-        Fn::GetAtt:
-        - ScheduledRule
-        - Arn
