@@ -11,4 +11,3 @@
             files:
               - ec2-scheduler.zip
               - packaged.yaml
-              - Test.json
