@@ -128,7 +128,7 @@ Resources:
             - kms:CreateGrant
             Resource: "*"
       Events:
-        Schedule:
+        LambdaSchedule:
         - Type: Schedule
           Properties:
             Schedule: !Ref Schedule
