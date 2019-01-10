@@ -1,0 +1,14 @@
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - cd code
+                - pip install pytz -t .
+                - zip -r -9 ../ec2-scheduler.zip *
+            post_build:
+              commands:
+                - aws cloudformation package --template-file ec2-scheduler.yaml --s3-bucket $BucketName --output-template-file packaged.yaml
+          artifacts:
+            files:
+              - ec2-scheduler.zip
+              - packaged.yaml
