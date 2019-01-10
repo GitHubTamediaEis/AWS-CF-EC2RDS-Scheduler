@@ -140,7 +140,7 @@ Resources:
       Description: EC2 Scheduler Lambda function (supporting weekdays/monthdays) for automatically starting and stopping EC2 instances.
       Role: !GetAtt Role.Arn
       Events:
-        LambdaSchedule:
+        Lalalalalala:
         - Type: Schedule
           Properties:
             Schedule: rate(5 minutes)
