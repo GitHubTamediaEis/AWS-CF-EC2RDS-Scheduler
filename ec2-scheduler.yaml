@@ -138,3 +138,8 @@ Resources:
       Runtime:  python2.7
       CodeUri: ec2-scheduler.zip
       Role: !GetAtt Role.Arn
+      Events:
+        Test:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
