@@ -142,4 +142,4 @@ Resources:
         Test:
           Type: Schedule
           Properties:
-            Schedule: rate(5 minutes)
+            Schedule: !Ref Schedule
