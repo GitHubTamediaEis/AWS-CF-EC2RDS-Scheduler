@@ -139,3 +139,8 @@ Resources:
       CodeUri: './ec2-scheduler.zip'
       Description: EC2 Scheduler Lambda function (supporting weekdays/monthdays) for automatically starting and stopping EC2 instances.
       Role: !GetAtt Role.Arn
+      Events:
+        LambdaSchedule:
+        - Type: Schedule
+          Properties:
+            Schedule: !Ref Schedule
