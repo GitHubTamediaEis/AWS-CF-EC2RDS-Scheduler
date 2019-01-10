@@ -1,0 +1,21 @@
+{
+    "Parameters" : {
+      "Schedule" : "1minute",
+      "DefaultStartTime" : "0800",
+      "DefaultStopTime" : "1800",
+      "DefaultDaysActive" : "'mon','tue','wed','thu','fri'",
+      "DefaultTimeZone" : "Europe/Zurich",
+      "CustomTagName" : "scheduler:ec2-startstop",
+      "CustomRDSTagName" : "CustomRDSTagName",
+      "CloudWatchMetrics" : "Disabled",
+      "Regions" : "eu-west-1",
+      "RDSSupport" : "Yes",
+      "S3BucketName": "whatever"
+    },
+    "Tags": {
+      "Owner" : "pierre.steiner@tamedia.ch",
+      "Landscape" : "Prod",
+      "CostCenter" : "2489",
+      "SupportedBy" : "pierre.steiner@tamedia.ch"
+    }
+  }
