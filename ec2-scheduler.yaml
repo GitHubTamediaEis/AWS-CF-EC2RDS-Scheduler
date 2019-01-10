@@ -93,15 +93,17 @@ Metadata:
       Parameters:
       - CloudWatchMetrics
 Resources:
-  Ec2Scheduler:
-    Type: 'AWS::Serverless::Function'
+  Role:
+    Type: AWS::IAM::Role
     Properties:
-      Handler: ec2-scheduler.lambda_handler
-      Timeout: 300
-      MemorySize: 256
-      Runtime:  python2.7
-      CodeUri: './ec2-scheduler.zip'
-      Description: EC2 Scheduler Lambda function (supporting weekdays/monthdays) for automatically starting and stopping EC2 instances.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Path: "/"
       Policies:
       - PolicyName: ec2SchedulerPermissions
         PolicyDocument:
@@ -127,3 +129,30 @@ Resources:
             - cloudformation:DescribeStacks
             - kms:CreateGrant
             Resource: "*"
+  Ec2Scheduler:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: ec2-scheduler.lambda_handler
+      Timeout: 300
+      MemorySize: 256
+      Runtime:  python2.7
+      CodeUri: './ec2-scheduler.zip'
+      Description: EC2 Scheduler Lambda function (supporting weekdays/monthdays) for automatically starting and stopping EC2 instances.
+      Role: !GetAtt Role.Arn
+      Events:
+        LambdaSchedule:
+        - Type: Schedule
+          Properties:
+            Schedule: !Ref Schedule
+            Input: !Sub | 
+              {
+              "Regions":"${Regions}",
+              "CustomTagName":"${CustomTagName}",
+              "CustomRDSTagName":"${CustomRDSTagName}",
+              "DefaultStartTime":"${DefaultStartTime}",
+              "DefaultStopTime":"${DefaultStopTime}",
+              "DefaultTimeZone":"${DefaultTimeZone}",
+              "CloudWatchMetrics":"${CloudWatchMetrics}",
+              "DefaultDaysActive":"${DefaultDaysActive}",
+              "RDSSupport":"${RDSSupport}"
+              }
