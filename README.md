@@ -2,22 +2,22 @@
 
 This is a solution to enable the scheduling of EC2 and RDS instances, so that they can be started and stopped automatically. It is composed of the following files:
 
-# ec2-scheduler.yaml
+# ec2rds-scheduler.yaml
 
 It's a CloudFormation template that enables the configuration and usage of the solution. It also creates a lambda function 
 
-# ec2-scheduler.py
+# ec2rds-scheduler.py
 
 This file contains auxiliary functions for the lambda function.
 
-# ec2-scheduler.zip
+# ec2rds-scheduler.zip
 Compiled version of the ec2-scheduler.py file with its dependencies
 
 # Instructions
 
-The usage of the solution is the following:
+The manual usage of the solution is the following:
 
-1. Upload the ec2-scheduler.zip to an s3 bucket
+1. Upload the ec2rds-scheduler.zip to an s3 bucket
 2. Upload the CF template to CloudFormation, provide the name of the s3 bucket where you upload the .zip file and change the parameters as desired, including the possibility of enabling metrics in CloudWatch. The template will trigger the creation of a Lambda function that executes periodically and checks if any EC2 and RDS instances needs to be started or stopped
 3. Add tags to the desired instances as explained below
 4. You can check that the solution is working by checking the metrics on Cloudwatch, if you have chosen to enable them
