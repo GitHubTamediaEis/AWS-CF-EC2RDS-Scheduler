@@ -127,7 +127,7 @@ Resources:
   Ec2RdsScheduler:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: ec2-scheduler.lambda_handler
+      Handler: ec2rds-scheduler.lambda_handler
       Timeout: 300
       MemorySize: 256
       Runtime:  python2.7
