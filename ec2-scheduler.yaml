@@ -128,7 +128,7 @@ Resources:
             - cloudformation:DescribeStacks
             - kms:CreateGrant
             Resource: "*"
-  Ec2Scheduler:
+  Ec2RdsScheduler:
     Type: AWS::Serverless::Function
     Properties:
       Handler: ec2-scheduler.lambda_handler
@@ -141,7 +141,7 @@ Resources:
         Test:
           Type: Schedule
           Properties:
-            Schedule: !Ref Schedule
+            Schedule: !FindInMap [ Schedule, Time, !Ref Schedule ]
             Input: !Sub | 
               {
               "Regions":"${Regions}",
