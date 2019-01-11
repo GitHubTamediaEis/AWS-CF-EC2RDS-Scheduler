@@ -135,7 +135,7 @@ Resources:
       Timeout: 300
       MemorySize: 256
       Runtime:  python2.7
-      CodeUri: ec2-scheduler.zip
+      CodeUri: ec2rds-scheduler.zip
       Role: !GetAtt Role.Arn
       Events:
         Test:
