@@ -7,10 +7,9 @@
       "DefaultTimeZone" : "Europe/Zurich",
       "CustomTagName" : "scheduler:ec2-startstop",
       "CustomRDSTagName" : "CustomRDSTagName",
-      "CloudWatchMetrics" : "Disabled",
+      "CloudWatchMetrics" : "Enabled",
       "Regions" : "eu-west-1",
-      "RDSSupport" : "Yes",
-      "S3BucketName": "whatever"
+      "RDSSupport" : "Yes"
     },
     "Tags": {
       "Owner" : "pierre.steiner@tamedia.ch",
