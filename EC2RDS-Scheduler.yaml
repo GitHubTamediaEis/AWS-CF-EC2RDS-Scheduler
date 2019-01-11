@@ -134,7 +134,7 @@ Resources:
       CodeUri: ec2rds-scheduler.zip
       Role: !GetAtt Role.Arn
       Events:
-        Test:
+        Schedule:
           Type: Schedule
           Properties:
             Schedule: !FindInMap [ Schedule, Time, !Ref Schedule ]
