@@ -11,6 +11,5 @@
                 - aws cloudformation package --template-file EC2RDS-Scheduler.yaml --s3-bucket $BucketName --output-template-file packaged.yaml
           artifacts:
             files:
-              - ec2-scheduler.zip
               - packaged.yaml
               - '*.json'
