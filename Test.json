@@ -6,7 +6,7 @@
       "DefaultDaysActive" : "'mon','tue','wed','thu','fri'",
       "DefaultTimeZone" : "Europe/Zurich",
       "CustomTagName" : "scheduler:ec2-startstop",
-      "CustomRDSTagName" : "CustomRDSTagName",
+      "CustomRDSTagName" : "scheduler:rds-startstop",
       "CloudWatchMetrics" : "Enabled",
       "Regions" : "eu-west-1",
       "RDSSupport" : "Yes"
