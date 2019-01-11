@@ -31,11 +31,11 @@ Parameters:
     Type: String
     Default: Europe/Zurich
   CustomTagName:
-    Description: Custom Tag Name
+    Description: Custom EC2 Tag Name
     Type: String
     Default: scheduler:ec2-startstop
   CustomRDSTagName:
-    Description: Custom Tag Name
+    Description: Custom RDS Tag Name
     Type: String
     Default: scheduler:rds-startstop
   CloudWatchMetrics:
@@ -72,6 +72,7 @@ Metadata:
         default: Tag Configuration
       Parameters:
       - CustomTagName
+      - CustomRDSTagName
     - Label:
         default: CloudWatch Event Schedule Configuration
       Parameters:
