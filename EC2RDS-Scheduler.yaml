@@ -138,8 +138,8 @@ Resources:
           Type: Schedule
           Properties:
             Schedule: !FindInMap [ Schedule, Time, !Ref Schedule ]
-            Input: !Sub | 
-              {
+            Input: !Sub
+              '{
               "Regions":"${Regions}",
               "CustomTagName":"${CustomTagName}",
               "CustomRDSTagName":"${CustomRDSTagName}",
@@ -149,4 +149,4 @@ Resources:
               "CloudWatchMetrics":"${CloudWatchMetrics}",
               "DefaultDaysActive":"${DefaultDaysActive}",
               "RDSSupport":"${RDSSupport}"
-              }
+              }'
