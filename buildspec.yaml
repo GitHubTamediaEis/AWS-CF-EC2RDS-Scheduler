@@ -3,10 +3,10 @@
             build:
               commands:
                 - pip install pytz -t code
-                - zip -r -9 ec2-scheduler.zip code/*
+                - zip -r -9 ec2rds-scheduler.zip code/*
             post_build:
               commands:
-                - aws cloudformation package --template-file ec2-scheduler.yaml --s3-bucket $BucketName --output-template-file packaged.yaml
+                - aws cloudformation package --template-file EC2RDS-Scheduler.yaml --s3-bucket $BucketName --output-template-file packaged.yaml
           artifacts:
             files:
               - ec2-scheduler.zip

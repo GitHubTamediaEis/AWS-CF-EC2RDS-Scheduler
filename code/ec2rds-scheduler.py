@@ -37,7 +37,7 @@ def putCloudWatchMetric(region, instance_id, instance_state):
     cw = boto3.client('cloudwatch')
 
     cw.put_metric_data(
-        Namespace='EC2Scheduler',
+        Namespace='EC2RDSScheduler',
         MetricData=[{
             'MetricName': instance_id,
             'Value': instance_state,
