@@ -151,3 +151,8 @@ Resources:
               "DefaultDaysActive":"${DefaultDaysActive}",
               "RDSSupport":"${RDSSupport}"
               }'
+  CodeBuildLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: !Sub /aws/lambda/${Ec2RdsScheduler}
+      RetentionInDays: 30              
