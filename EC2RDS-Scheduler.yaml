@@ -160,7 +160,8 @@ Resources:
               "CloudWatchMetrics":"${CloudWatchMetrics}",
               "DefaultDaysActive":"${DefaultDaysActive}",
               "RDSSupport":"${RDSSupport}",
-              "ASGSupport":"${ASGSupport}"
+              "ASGSupport":"${ASGSupport}",
+              "Schedule":"${Schedule}"
               }'
   CodeBuildLogGroup:
     Type: AWS::Logs::LogGroup
