@@ -9,7 +9,8 @@
       "CustomRDSTagName" : "scheduler:rds-startstop",
       "CloudWatchMetrics" : "Enabled",
       "Regions" : "eu-west-1",
-      "RDSSupport" : "Yes"
+      "RDSSupport" : "Yes",
+      "ASGSupport" : "Yes"
     },
     "Tags": {
       "Owner" : "pierre.steiner@tamedia.ch",

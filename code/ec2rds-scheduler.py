@@ -15,9 +15,6 @@
 import boto3
 import datetime
 import json
-from urllib2 import Request
-from urllib2 import urlopen
-from collections import Counter
 
 # Import re to analyse month day
 import re
@@ -109,7 +106,7 @@ def scheduler_action(tagValue):
                     tz = pytz.timezone(timeZone)
                 # No action if timeZone is not supported
                 else:
-                    print "Invalid time zone :", timeZone
+                    print ("Invalid time zone :", timeZone)
                     isValidTimeZone = False
             # utc timezone
             else:
@@ -180,7 +177,7 @@ def lambda_handler(event, context):
     global defaultTimeZone
     global defaultDaysActive
 
-    print "Running EC2 and RDS Scheduler"
+    print ("************** Running EC2 and RDS Scheduler **************")
 
     ec2 = boto3.client('ec2')
 
@@ -191,7 +188,7 @@ def lambda_handler(event, context):
     else:
         AwsRegionNames = event['Regions'].split()
 
-    print "Operate in regions: ", " ".join(AwsRegionNames)
+    print ("Operate in regions: ", " ".join(AwsRegionNames))
 
     # Reading Default Values from CloudWatch Rule Input event
     customTagName = event['CustomTagName']
@@ -209,38 +206,54 @@ def lambda_handler(event, context):
     customRDSTagName = event['CustomRDSTagName']
     customRDSTagLen = len(customRDSTagName)
 
+    # ASG support
+    ASGSupport = event['ASGSupport']
+    if ASGSupport == "Yes":
+        print ("ASG support is enabled")
+    else:
+        print ("ASG support is disabled")
+
     TimeNow = datetime.datetime.utcnow().isoformat()
     TimeStamp = str(TimeNow)
 
-    # Declare Dicts
-    regionDict = {}
-    allRegionDict = {}
-    regionsLabelDict = {}
-    postDict = {}
-
     for region_name in AwsRegionNames:
         try:
-            # Create connection to the EC2 using Boto3 resources interface
-            ec2 = boto3.resource('ec2', region_name = region_name)
-
+            print ("==============", region_name, "==============")
             # Declare Lists
             startList = []
             stopList = []
-            runningStateList = []
-            stoppedStateList = []
+            if ASGSupport == "Yes":
+                InServiceList = []
+                StandbyList = []
+            
+            # Create connection to the EC2 using Boto3 resources interface
+            ec2 = boto3.resource('ec2', region_name = region_name)
 
             # List all instances
             instances = ec2.instances.all()
 
-            print "Creating ", region_name, " EC2 instance lists..."
+            if ASGSupport == "Yes":
+                # Create connection to Autoscaling using Boto3 client interface
+                aws_scaling_client = boto3.client('autoscaling', region_name = region_name)
+    
+                next_token = ''
+                while next_token is not None:
+                    if next_token is not '':
+                        describe_result = aws_scaling_client.describe_auto_scaling_instances(NextToken=next_token)
+                    else:
+                        describe_result = aws_scaling_client.describe_auto_scaling_instances()
+                    next_token = describe_result.get('NextToken')
+    
+                # List all ASG members
+                asgmembers = describe_result.get('AutoScalingInstances')
 
+            print ("-------------- Populate EC2 lists --------------")
             for i in instances:
                 if i.tags != None:
                     for t in i.tags:
                         if t['Key'][:customTagLen] == customTagName:
 
                             state = i.state['Name']
-                            itype = i.instance_type
 
                             # Post current state of the instances
                             if createMetrics == 'enabled':
@@ -249,13 +262,20 @@ def lambda_handler(event, context):
                                 if state == "stopped":
                                     putCloudWatchMetric(region_name, i.instance_id, 0)
 
+                            # Get action for instance
                             action = scheduler_action(tagValue = t['Value'])
 
                             # Append to start list
                             if action == "START" and state == "stopped":
                                 if i.instance_id not in startList:
                                     startList.append(i.instance_id)
-                                    print i.instance_id, " added to START list"
+                                    print (i.instance_id, " added to START list")
+                                    if ASGSupport == "Yes":
+                                        # Check if instance is in ASG
+                                        for j in asgmembers:
+                                            if i.instance_id == j['InstanceId']:
+                                                print ("|--> is member of ASG ", j['AutoScalingGroupName'], "--> adding the instance to InServiceList")
+                                                InServiceList.append([i.instance_id,j['AutoScalingGroupName']])
                                     if createMetrics == 'enabled':
                                         putCloudWatchMetric(region_name, i.instance_id, 1)
                                 # Instance Id already in startList
@@ -264,29 +284,51 @@ def lambda_handler(event, context):
                             if action == "STOP" and state == "running":
                                 if i.instance_id not in stopList:
                                     stopList.append(i.instance_id)
-                                    print i.instance_id, " added to STOP list"
+                                    print (i.instance_id, " added to STOP list")
+                                    if ASGSupport == "Yes":
+                                        # Check if instance is in ASG
+                                        for j in asgmembers:
+                                            if i.instance_id == j['InstanceId']:
+                                                print ("|--> is member of ASG ", j['AutoScalingGroupName'], "--> adding the instance to StandbyList")
+                                                StandbyList.append([i.instance_id,j['AutoScalingGroupName']])
                                     if createMetrics == 'enabled':
                                         putCloudWatchMetric(region_name, i.instance_id, 0)
                                 # Instance Id already in stopList
 
-                            if state == 'running':
-                                runningStateList.append(itype)
-                            if state == 'stopped':
-                                stoppedStateList.append(itype)
-
+            print ("-------------- Execute EC2 actions --------------")
             # Execute Start and Stop Commands
             if startList:
-                print "Starting", len(startList), "instances", startList
+                print ("Starting", len(startList), "instances", startList)
                 ec2.instances.filter(InstanceIds=startList).start()
             else:
-                print "No Instances to Start in region ",  region_name
+                print ("No Instances to Start in region ",  region_name)
+
+            if ASGSupport == "Yes":
+                if InServiceList:
+                    print ("Putting", len(InServiceList), "instances to InService", InServiceList)
+                    for i in InServiceList:
+                        aws_scaling_client.exit_standby(InstanceIds=[i[0]], AutoScalingGroupName=i[1])
+                else:
+                    print ("No Instances to put to InService in region ",  region_name)
+    
+                if StandbyList:
+                    print ("Putting", len(StandbyList), "instances to Standby", StandbyList)
+                    for i in StandbyList:
+                        try:
+                            aws_scaling_client.enter_standby(InstanceIds=[i[0]], AutoScalingGroupName=i[1], ShouldDecrementDesiredCapacity=True)
+                        except Exception as e:
+                            print ("|--> Instance", i[0], "can't be put to Standby because the Min-Value of ASG", i[1], "doesn't allow it.")
+                            stopList.remove(i[0])
+                            print ("|---->", i[0], " removed from STOP list")
+                else:
+                    print ("No Instances to put to Standby in region ",  region_name)
 
             if stopList:
-                print "Stopping", len(stopList) ,"instances", stopList
+                print ("Stopping", len(stopList) ,"instances", stopList)
                 ec2.instances.filter(InstanceIds=stopList).stop()
             else:
-                print "No Instances to Stop in region ", region_name
-            
+                print ("No Instances to Stop in region ", region_name)
+
         except Exception as e:
             print ("Exception: "+str(e))
             continue
@@ -295,30 +337,28 @@ def lambda_handler(event, context):
             # Declare Lists
             rdsStartList = []
             rdsStopList = []
-            rdsRunningStateList = []
-            rdsStoppedStateList = []
 
-            print "Creating ", region_name, " RDS instance lists..."
             try:
                 rds = boto3.client('rds', region_name =  region_name)
                 rds_instances = rds.describe_db_instances()
 
+                print ("-------------- Populate RDS lists --------------")
                 for rds_instance in rds_instances['DBInstances']:
 
                     if len(rds_instance['ReadReplicaDBInstanceIdentifiers']):
-                        print "----- No action against RDS instance (with read replica): ", rds_instance['DBInstanceIdentifier']
+                        print ("----- No action against RDS instance (with read replica): ", rds_instance['DBInstanceIdentifier'])
                         continue
 
                     if "ReadReplicaSourceDBInstanceIdentifier" in rds_instance.keys():
-                        print "----- No action against RDS instance (replication): ", rds_instance['DBInstanceIdentifier']
+                        print ("----- No action against RDS instance (replication): ", rds_instance['DBInstanceIdentifier'])
                         continue
 
                     if rds_instance['MultiAZ']:
-                        print "----- No action against RDS instance (Multiple AZ): ", rds_instance['DBInstanceIdentifier']
+                        print ("----- No action against RDS instance (Multiple AZ): ", rds_instance['DBInstanceIdentifier'])
                         continue
 
                     if rds_instance['DBInstanceStatus'] not in ["available","stopped"]:
-                        print "----- No action against RDS instance (unsupported status):", rds_instance['DBInstanceIdentifier']
+                        print ("----- No action against RDS instance (unsupported status):", rds_instance['DBInstanceIdentifier'])
                         continue
 
                     # Query RDS instance tags 
@@ -335,35 +375,36 @@ def lambda_handler(event, context):
                             if action == "START" and state == "stopped":
                                 if rds_instance['DBInstanceIdentifier'] not in rdsStartList:
                                     rdsStartList.append(rds_instance['DBInstanceIdentifier'])
-                                    print rds_instance['DBInstanceIdentifier'], " added to RDS START list"
+                                    print (rds_instance['DBInstanceIdentifier'], " added to RDS START list")
                                 # Instance Id already in rdsStartList
 
                             # Append to stop list
                             if action == "STOP" and state == "available":
                                 if rds_instance['DBInstanceIdentifier'] not in rdsStopList:
                                     rdsStopList.append(rds_instance['DBInstanceIdentifier'])
-                                    print rds_instance['DBInstanceIdentifier'], " added to RDS STOP list"
+                                    print (rds_instance['DBInstanceIdentifier'], " added to RDS STOP list")
                                 # Instance Id already in rdsStopList
 
+                print ("-------------- Execute RDS actions --------------")
                 # Execute Start and Stop Commands
                 if rdsStartList:
-                    print "Starting", len(rdsStartList), "RDS instances", rdsStartList
+                    print ("Starting", len(rdsStartList), "RDS instances", rdsStartList)
                     for DBInstanceIdentifier in rdsStartList:
                         rds.start_db_instance(DBInstanceIdentifier = DBInstanceIdentifier)
                 else:
-                    print "No RDS Instances to Start in region ",  region_name
+                    print ("No RDS Instances to Start in region ",  region_name)
 
                 if rdsStopList:
-                    print "Stopping", len(rdsStopList) ,"RDS instances", rdsStopList
+                    print ("Stopping", len(rdsStopList) ,"RDS instances", rdsStopList)
                     for DBInstanceIdentifier in rdsStopList:
                         rds.stop_db_instance(DBInstanceIdentifier = DBInstanceIdentifier)
                 else:
-                    print "No RDS Instances to Stop in region ", region_name
+                    print ("No RDS Instances to Stop in region ", region_name)
 
             except Exception as e:
                 print ("Exception: "+str(e))
                 continue
-
+    print ("************** EC2 and RDS Scheduler finished **************")
 # Local version
 if  __name__ =='__main__':
     event = {
@@ -373,6 +414,7 @@ if  __name__ =='__main__':
         "Regions": "eu-west-1",
         "DefaultTimeZone": "Europe/Zurich",
         "RDSSupport": "Yes",
+        "ASGSupport": "Yes",
         "CustomTagName": "scheduler:ec2-startstop",
         "CustomRDSTagName": "scheduler:rds-startstop",
         "CloudWatchMetrics": "Enabled"
