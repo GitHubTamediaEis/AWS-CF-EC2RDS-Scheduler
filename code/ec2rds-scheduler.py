@@ -170,6 +170,8 @@ def lambda_handler(event, context):
     global now
     global nowMax
     global tz
+    global nowDay
+    global nowDate
     
      # Set global default value from CloudWatch Rule Input event
     defaultStartTime = event['DefaultStartTime'].replace("'","")
