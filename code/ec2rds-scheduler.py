@@ -196,8 +196,8 @@ def lambda_handler(event, context):
     createMetrics = event['CloudWatchMetrics'].lower()
 
     # Set global default value
-    defaultStartTime = event['DefaultStartTime']
-    defaultStopTime = event['DefaultStopTime']
+    defaultStartTime = event['DefaultStartTime'].replace("'","")
+    defaultStopTime = event['DefaultStopTime'].replace("'","")
     defaultTimeZone = event['DefaultTimeZone']
     defaultDaysActive = event['DefaultDaysActive']
 
