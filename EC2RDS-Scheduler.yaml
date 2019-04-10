@@ -1,9 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
-Description: 'EC2/RDS Scheduler: This template deploys a lambda for AWS EC2 Scheduler for automatically starting and stopping EC2/RDS instances based on tags'
+Description: 'EC2/RDS Scheduler: This template deploys a lambda function that automatically starts and stops EC2/RDS instances based on tags'
 Parameters:
   Schedule:
-    Description: Schedule for CWE Scheduled Expression
+    Description: Interval to execute the lambda function
     Type: String
     Default: 5minutes
     AllowedValues:
@@ -15,11 +15,11 @@ Parameters:
   DefaultStartTime:
     Description: Default Start Time (DefaultTimeZone, utc by default,24-hour format)
     Type: String
-    Default: '0800'
+    Default: 0800
   DefaultStopTime:
     Description: Default Start Time (DefaultTimeZone, utc by default, 24-hour format)
     Type: String
-    Default: '1800'
+    Default: 1800
   DefaultDaysActive:
     Description: Enter 'all', 'weekdays', or any combination of days ('mon', 'tue',
       'wed', 'thu', 'fri', 'sat', or 'sun') comma separated
@@ -52,6 +52,13 @@ Parameters:
     Default: eu-west-1
   RDSSupport:
     Description: Support RDS instances
+    Type: String
+    Default: 'Yes'
+    AllowedValues:
+    - 'Yes'
+    - 'No'
+  ASGSupport:
+    Description: Support handling of Autoscaling Groups (The ASGs "Min-Value" must allow for the instances to be set to standby. Ideally the "Min-Value" should be set to 0)
     Type: String
     Default: 'Yes'
     AllowedValues:
@@ -117,6 +124,9 @@ Resources:
             - ec2:StopInstances
             - ec2:DescribeRegions
             - ec2:DescribeInstances
+            - autoscaling:DescribeAutoScalingInstances
+            - autoscaling:EnterStandby
+            - autoscaling:ExitStandby
             - rds:DescribeDBInstances
             - rds:StartDBInstance
             - rds:StopDBInstance
@@ -149,10 +159,11 @@ Resources:
               "DefaultTimeZone":"${DefaultTimeZone}",
               "CloudWatchMetrics":"${CloudWatchMetrics}",
               "DefaultDaysActive":"${DefaultDaysActive}",
-              "RDSSupport":"${RDSSupport}"
+              "RDSSupport":"${RDSSupport}",
+              "ASGSupport":"${ASGSupport}"
               }'
   CodeBuildLogGroup:
     Type: AWS::Logs::LogGroup
     Properties: 
       LogGroupName: !Sub /aws/lambda/${Ec2RdsScheduler}
-      RetentionInDays: 30              
+      RetentionInDays: 30
