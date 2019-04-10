@@ -207,8 +207,7 @@ def lambda_handler(event, context):
     customRDSTagLen = len(customRDSTagName)
 
     # ASG support
-    #ASGSupport = event['ASGSupport']
-    ASGSupport = "No"
+    ASGSupport = event['ASGSupport']
     if ASGSupport == "Yes":
         print ("ASG support is enabled")
     else:
