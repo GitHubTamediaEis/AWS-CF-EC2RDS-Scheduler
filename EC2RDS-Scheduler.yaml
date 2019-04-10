@@ -141,7 +141,7 @@ Resources:
       Handler: ec2rds-scheduler.lambda_handler
       Timeout: 300
       MemorySize: 256
-      Runtime:  python2.7
+      Runtime:  python3.7
       CodeUri: ec2rds-scheduler.zip
       Role: !GetAtt Role.Arn
       Events:
