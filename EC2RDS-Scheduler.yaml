@@ -13,29 +13,29 @@ Parameters:
     - 30minutes
     - 1hour
   DefaultStartTime:
-    Description: Default Start Time (DefaultTimeZone, utc by default,24-hour format)
+    Description: Default Start Time (DefaultTimeZone, utc by default, 24-hour format, enclose in '')
     Type: String
     Default: "'0800'"
   DefaultStopTime:
-    Description: Default Start Time (DefaultTimeZone, utc by default, 24-hour format)
+    Description: Default Start Time (DefaultTimeZone, utc by default, 24-hour format, enclose in '')
     Type: String
     Default: "'1800'"
   DefaultDaysActive:
-    Description: Enter 'all', 'weekdays', or any combination of days ('mon', 'tue',
-      'wed', 'thu', 'fri', 'sat', or 'sun') comma separated
+    Description: Enter all, weekdays, or any combination of days (mon, tue,
+      wed, thu, fri, sat, or sun) comma separated
     Type: String
-    Default: "'mon','tue','wed','thu','fri'"
+    Default: "mon,tue,wed,thu,fri"
   DefaultTimeZone:
-    Description: Enter 'utc', 'Australia/Sydney','Etc/GMT+10', or any timezone supported
+    Description: Enter utc, Australia/Sydney, Etc/GMT+10, or any timezone supported
       by pytz
     Type: String
     Default: Europe/Zurich
   CustomTagName:
-    Description: Custom EC2 Tag Name
+    Description: Tag name to use on EC2 instances
     Type: String
     Default: scheduler:ec2-startstop
   CustomRDSTagName:
-    Description: Custom RDS Tag Name
+    Description: Tag name to use on RDS instances
     Type: String
     Default: scheduler:rds-startstop
   CloudWatchMetrics:
@@ -46,7 +46,7 @@ Parameters:
     - Enabled
     - Disabled
   Regions:
-    Description: AWS regions to query, all means all AWS regions, or separate  multiple
+    Description: AWS regions to query, all means all AWS regions, or separate multiple
       regions by space
     Type: String
     Default: eu-west-1
