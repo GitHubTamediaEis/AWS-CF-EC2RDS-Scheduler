@@ -124,6 +124,7 @@ Resources:
             - ec2:StopInstances
             - ec2:DescribeRegions
             - ec2:DescribeInstances
+            - autoscaling:DescribeAutoScalingGroups
             - autoscaling:DescribeAutoScalingInstances
             - autoscaling:EnterStandby
             - autoscaling:ExitStandby
