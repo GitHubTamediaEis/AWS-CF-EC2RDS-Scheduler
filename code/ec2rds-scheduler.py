@@ -285,12 +285,12 @@ def lambda_handler(event, context):
                             # Get instance state
                             state = i.state['Name']
                             
-                            # Post current state of the instances
-                            #if createMetrics == "Yes":
-                            #    if state == "running":
-                            #        putCloudWatchMetric(region_name, i.instance_id, 1)
-                            #    if state == "stopped":
-                            #        putCloudWatchMetric(region_name, i.instance_id, 0)
+                            # Post current state of the instance
+                            if createMetrics == "Yes":
+                                if state == "running":
+                                    putCloudWatchMetric(region_name, i.instance_id, 1)
+                                if state == "stopped":
+                                    putCloudWatchMetric(region_name, i.instance_id, 0)
                                     
                             # Get action for instance
                             action = scheduler_action(tagValue = t['Value'])
@@ -333,7 +333,7 @@ def lambda_handler(event, context):
                     ec2.instances.filter(InstanceIds=startList).start()
                     if createMetrics == "Yes":
                         for i in startList:
-                            putCloudWatchMetric(region_name, i.instance_id, 1)
+                            putCloudWatchMetric(region_name, i, 1)
                 else:
                     print ("No Instances to start in region",  region_name)
                     
@@ -420,7 +420,7 @@ def lambda_handler(event, context):
                     ec2.instances.filter(InstanceIds=stopList).stop()
                     if createMetrics == "Yes":
                         for i in stopList:
-                            putCloudWatchMetric(region_name, i.instance_id, 0)
+                            putCloudWatchMetric(region_name, i, 0)
                     
                 else:
                     print ("No Instances to stop in region", region_name)
@@ -444,6 +444,7 @@ def lambda_handler(event, context):
                 print ("*** Populate RDS lists")
                 
                 for rds_instance in rds_instances['DBInstances']:
+                    
                     if len(rds_instance['ReadReplicaDBInstanceIdentifiers']):
                         print ("No action against RDS instance", rds_instance['DBInstanceIdentifier'], "(has read replica)")
                         continue
@@ -467,6 +468,16 @@ def lambda_handler(event, context):
                     for t in tags:
                         # Search tag
                         if t['Key'][:customRDSTagLen] == customRDSTagName:
+                            
+                            state = rds_instance['DBInstanceStatus']
+                            
+                            # Post current state of the instance
+                            if createMetrics == "Yes":
+                                if state == "available":
+                                    putCloudWatchMetric(region_name, rds_instance['DBInstanceIdentifier'], 1)
+                                if state == "stopped":
+                                    putCloudWatchMetric(region_name, rds_instance['DBInstanceIdentifier'], 0)
+                            
                             action = scheduler_action(tagValue = t['Value'])
                             state = rds_instance['DBInstanceStatus']
                             
@@ -489,7 +500,7 @@ def lambda_handler(event, context):
                 if rdsStartList or rdsStopList:
                     # Execute Start and Stop Commands
                     if rdsStartList:
-                        print ("Starting", len(rdsStartList), "RDS instances", rdsStartList)
+                        print ("Starting", len(rdsStartList), "RDS instances:", rdsStartList)
                         for DBInstanceIdentifier in rdsStartList:
                             rds.start_db_instance(DBInstanceIdentifier = DBInstanceIdentifier)
                             if createMetrics == "Yes":
@@ -499,7 +510,7 @@ def lambda_handler(event, context):
                         print ("No RDS Instances to Start in region",  region_name)
                         
                     if rdsStopList:
-                        print ("Stopping", len(rdsStopList) ,"RDS instances", rdsStopList)
+                        print ("Stopping", len(rdsStopList) ,"RDS instances:", rdsStopList)
                         for DBInstanceIdentifier in rdsStopList:
                             rds.stop_db_instance(DBInstanceIdentifier = DBInstanceIdentifier)
                             if createMetrics == "Yes":
