@@ -3,62 +3,58 @@ Transform: 'AWS::Serverless-2016-10-31'
 Description: 'EC2/RDS Scheduler: This template deploys a lambda function that automatically starts and stops EC2/RDS instances based on tags'
 Parameters:
   Schedule:
-    Description: Interval to execute the lambda function
+    Description: Interval to execute the scheduler.
     Type: String
-    Default: 5minutes
+    Default: 1hour
     AllowedValues:
-    - 1minute
     - 5minutes
     - 15minutes
     - 30minutes
     - 1hour
   DefaultStartTime:
-    Description: Default Start Time (DefaultTimeZone, utc by default, 24-hour format, enclose in '')
+    Description: Default time to start tagged instances (enclose in '').
     Type: String
     Default: "'0800'"
   DefaultStopTime:
-    Description: Default Start Time (DefaultTimeZone, utc by default, 24-hour format, enclose in '')
+    Description: Default time to stop tagged instances (enclose in '').
     Type: String
     Default: "'1800'"
   DefaultDaysActive:
-    Description: Enter all, weekdays, or any combination of days (mon, tue,
-      wed, thu, fri, sat, or sun) comma separated
+    Description: On which days to execute the scheduler. Possible values (comma-separated): all, weekdays, or any combination of days (mon, tue, wed, thu, fri, sat, sun).
     Type: String
-    Default: "mon,tue,wed,thu,fri"
+    Default: "weekdays"
   DefaultTimeZone:
-    Description: Enter utc, Australia/Sydney, Etc/GMT+10, or any timezone supported
-      by pytz
+    Description: Timezone to use. Possible values: utc, Australia/Sydney, Etc/GMT+10, or any timezone supported by the pytz library.
     Type: String
     Default: Europe/Zurich
   CustomTagName:
-    Description: Tag name to use on EC2 instances
+    Description: Tag name to use on EC2 instances.
     Type: String
     Default: scheduler:ec2-startstop
   CustomRDSTagName:
-    Description: Tag name to use on RDS instances
+    Description: Tag name to use on RDS instances.
     Type: String
     Default: scheduler:rds-startstop
   CloudWatchMetrics:
-    Description: Create CloudWatch Custom Metric
+    Description: Create CloudWatch metrics to track the state of instances.
     Type: String
-    Default: Disabled
+    Default: No
     AllowedValues:
-    - Enabled
-    - Disabled
+    - Yes
+    - No
   Regions:
-    Description: AWS regions to query, all means all AWS regions, or separate multiple
-      regions by space
+    Description: AWS regions to operate in. Possible values (comma-separated): all, list of regions.
     Type: String
     Default: eu-west-1
   RDSSupport:
-    Description: Support RDS instances
+    Description: Support RDS instances.
     Type: String
     Default: 'Yes'
     AllowedValues:
     - 'Yes'
     - 'No'
   ASGSupport:
-    Description: Support handling of Autoscaling Groups (The ASGs "Min-Value" must allow for the instances to be set to standby. Ideally the "Min-Value" should be set to 0)
+    Description: Support handling of Auto Scaling Groups. The ASGs Min-Value must allow for the instances to be set to standby, see documentation for more info.
     Type: String
     Default: 'Yes'
     AllowedValues:
@@ -67,7 +63,6 @@ Parameters:
 Mappings:
   Schedule:
     Time:
-      1minute: cron(0/1 * * * ? *)
       5minutes: cron(0/5 * * * ? *)
       15minutes: cron(0/15 * * * ? *)
       30minutes: cron(0/30 * * * ? *)
@@ -76,14 +71,15 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
+        default: Scheduler Configuration
+      Parameters:
+      - Schedule
+      - Regions
+    - Label:
         default: Tag Configuration
       Parameters:
       - CustomTagName
       - CustomRDSTagName
-    - Label:
-        default: CloudWatch Event Schedule Configuration
-      Parameters:
-      - Schedule
     - Label:
         default: Default Value Configuration
       Parameters:
@@ -92,7 +88,12 @@ Metadata:
       - DefaultDaysActive
       - DefaultTimeZone
     - Label:
-        default: CloudWatch Custom Metric
+        default: ASG and RDS Configuration
+      Parameters:
+      - ASGSupport
+      - RDSSupport
+    - Label:
+        default: CloudWatch metrics
       Parameters:
       - CloudWatchMetrics
 Resources:
@@ -152,17 +153,17 @@ Resources:
             Schedule: !FindInMap [ Schedule, Time, !Ref Schedule ]
             Input: !Sub
               '{
+              "Schedule":"${Schedule}",
               "Regions":"${Regions}",
               "CustomTagName":"${CustomTagName}",
               "CustomRDSTagName":"${CustomRDSTagName}",
               "DefaultStartTime":"${DefaultStartTime}",
               "DefaultStopTime":"${DefaultStopTime}",
               "DefaultTimeZone":"${DefaultTimeZone}",
-              "CloudWatchMetrics":"${CloudWatchMetrics}",
               "DefaultDaysActive":"${DefaultDaysActive}",
               "RDSSupport":"${RDSSupport}",
               "ASGSupport":"${ASGSupport}",
-              "Schedule":"${Schedule}"
+              "CloudWatchMetrics":"${CloudWatchMetrics}"
               }'
   CodeBuildLogGroup:
     Type: AWS::Logs::LogGroup
