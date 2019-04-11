@@ -20,7 +20,7 @@ Parameters:
     Type: String
     Default: "'1800'"
   DefaultDaysActive:
-    Description: "On which days to execute the scheduler. Possible values (comma-separated): all, weekdays, or any combination of days (mon, tue, wed, thu, fri, sat, sun)."
+    Description: "Default days to start or stop tagged instances. Possible values (comma-separated): all, weekdays, or any combination of days (mon, tue, wed, thu, fri, sat, sun)."
     Type: String
     Default: "weekdays"
   DefaultTimeZone:
