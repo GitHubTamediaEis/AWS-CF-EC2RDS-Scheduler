@@ -1,13 +1,13 @@
 {
     "Parameters" : {
-      "Schedule" : "1minute",
+      "Schedule" : "5minutes",
       "DefaultStartTime" : "0800",
       "DefaultStopTime" : "1800",
-      "DefaultDaysActive" : "'mon','tue','wed','thu','fri'",
+      "DefaultDaysActive" : "weekdays",
       "DefaultTimeZone" : "Europe/Zurich",
       "CustomTagName" : "scheduler:ec2-startstop",
       "CustomRDSTagName" : "scheduler:rds-startstop",
-      "CloudWatchMetrics" : "Enabled",
+      "CloudWatchMetrics" : "Yes",
       "Regions" : "eu-west-1",
       "RDSSupport" : "Yes",
       "ASGSupport" : "Yes"
