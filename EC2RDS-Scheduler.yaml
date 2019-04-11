@@ -38,7 +38,7 @@ Parameters:
   CloudWatchMetrics:
     Description: "Create CloudWatch metrics to track the state of instances."
     Type: String
-    Default: No
+    Default: 'No'
     AllowedValues:
     - 'Yes'
     - 'No'
