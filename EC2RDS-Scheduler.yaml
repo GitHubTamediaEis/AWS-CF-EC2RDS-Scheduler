@@ -3,7 +3,7 @@ Transform: 'AWS::Serverless-2016-10-31'
 Description: 'EC2/RDS Scheduler: This template deploys a lambda function that automatically starts and stops EC2/RDS instances based on tags'
 Parameters:
   Schedule:
-    Description: Interval to execute the scheduler.
+    Description: "Interval to execute the scheduler."
     Type: String
     Default: 1hour
     AllowedValues:
@@ -12,49 +12,49 @@ Parameters:
     - 30minutes
     - 1hour
   DefaultStartTime:
-    Description: Default time to start tagged instances (enclose in '').
+    Description: "Default time to start tagged instances (enclose in '')."
     Type: String
     Default: "'0800'"
   DefaultStopTime:
-    Description: Default time to stop tagged instances (enclose in '').
+    Description: "Default time to stop tagged instances (enclose in '')."
     Type: String
     Default: "'1800'"
   DefaultDaysActive:
-    Description: On which days to execute the scheduler. Possible values (comma-separated): all, weekdays, or any combination of days (mon, tue, wed, thu, fri, sat, sun).
+    Description: "On which days to execute the scheduler. Possible values (comma-separated): all, weekdays, or any combination of days (mon, tue, wed, thu, fri, sat, sun)."
     Type: String
     Default: "weekdays"
   DefaultTimeZone:
-    Description: Timezone to use. Possible values: utc, Australia/Sydney, Etc/GMT+10, or any timezone supported by the pytz library.
+    Description: "Timezone to use. Possible values: utc, Australia/Sydney, Etc/GMT+10, or any timezone supported by the pytz library."
     Type: String
     Default: Europe/Zurich
   CustomTagName:
-    Description: Tag name to use on EC2 instances.
+    Description: "Tag name to use on EC2 instances."
     Type: String
     Default: scheduler:ec2-startstop
   CustomRDSTagName:
-    Description: Tag name to use on RDS instances.
+    Description: "Tag name to use on RDS instances."
     Type: String
     Default: scheduler:rds-startstop
   CloudWatchMetrics:
-    Description: Create CloudWatch metrics to track the state of instances.
+    Description: "Create CloudWatch metrics to track the state of instances."
     Type: String
     Default: No
     AllowedValues:
     - Yes
     - No
   Regions:
-    Description: AWS regions to operate in. Possible values (comma-separated): all, list of regions.
+    Description: "AWS regions to operate in. Possible values (comma-separated): all, list of regions."
     Type: String
     Default: eu-west-1
   RDSSupport:
-    Description: Support RDS instances.
+    Description: "Support RDS instances."
     Type: String
     Default: 'Yes'
     AllowedValues:
     - 'Yes'
     - 'No'
   ASGSupport:
-    Description: Support handling of Auto Scaling Groups. The ASGs Min-Value must allow for the instances to be set to standby, see documentation for more info.
+    Description: "Support handling of Auto Scaling Groups. The ASGs Min-Value must allow for the instances to be set to standby, see documentation for more info."
     Type: String
     Default: 'Yes'
     AllowedValues:
