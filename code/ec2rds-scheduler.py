@@ -531,17 +531,17 @@ def lambda_handler(event, context):
 # Local version
 if  __name__ =='__main__':
     event = {
+        "Schedule": "1hour",
+        "Regions": "eu-west-1",
+        "CustomTagName": "scheduler:ec2-startstop",
+        "CustomRDSTagName": "scheduler:rds-startstop",
         "DefaultStartTime": "0800",
         "DefaultStopTime": "1800",
         "DefaultDaysActive": "all",
-        "Regions": "eu-west-1",
         "DefaultTimeZone": "Europe/Zurich",
         "RDSSupport": "Yes",
         "ASGSupport": "Yes",
-        "CustomTagName": "scheduler:ec2-startstop",
-        "CustomRDSTagName": "scheduler:rds-startstop",
-        "CloudWatchMetrics": "Enabled",
-        "Schedule": "1hour"
+        "CloudWatchMetrics": "No"
     }
     
     context = None
