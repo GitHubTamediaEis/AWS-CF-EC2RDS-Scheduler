@@ -1,107 +1,144 @@
 # AWS-CF-EC2RDS-Scheduler
 
-This is a solution to enable the scheduling of EC2 and RDS instances, so that they can be started and stopped automatically. It is composed of the following files:
+This is a solution to enable the scheduling of EC2 and RDS instances, so that they can be started and stopped automatically. It is deployed via [CodePipeline](https://docs.aws.amazon.com/codepipeline/index.html) and composed of the following files:
 
-# ec2rds-scheduler.yaml
+# code/ec2rds-scheduler.py
 
-It's a CloudFormation template that enables the configuration and usage of the solution. It also creates a lambda function 
+This file contains the lambda function code written in Python 3.7.
 
-# ec2rds-scheduler.py
+# EC2RDS-Scheduler.yaml
 
-This file contains auxiliary functions for the lambda function.
+This file is a CloudFormation template that enables the configuration and usage of the solution. It also creates a lambda function.
 
-# ec2rds-scheduler.zip
-Compiled version of the ec2-scheduler.py file with its dependencies
+# buildspec.yaml
+This file contains the [build specification reference](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html) for CodeBuild.
 
 # Instructions
 
-The manual usage of the solution is the following:
+The solution is available in the [ServiceCatalog](https://docs.aws.amazon.com/servicecatalog/latest/userguide/end-user-console.html) of your account and can be easily deployed from there.
 
-1. Upload the ec2rds-scheduler.zip to an s3 bucket
-2. Upload the CF template to CloudFormation, provide the name of the s3 bucket where you upload the .zip file and change the parameters as desired, including the possibility of enabling metrics in CloudWatch. The template will trigger the creation of a Lambda function that executes periodically and checks if any EC2 and RDS instances needs to be started or stopped
-3. Add tags to the desired instances as explained below
-4. You can check that the solution is working by checking the metrics on Cloudwatch, if you have chosen to enable them
+Upon deployment you have to specify custom parameters which are explained hereafter.
 
 # Custom parameters
 
-| Parameter | Default | Notes|
-| ------ | ------ |------|
-|Schedule | 5 minutes | How often should the lambda function execute|
-|DefaultStartTime | 0800 | Default Time to start the tagged instances|
-|DefaultStopTime | 1800 | Default Time to stop the tagged instances|
-|DefaultDaysActive| 'mon','tue','wed','thu','fri' | You can specify which days the instances should be active, or just enter 'all' |
-|DefaultTimeZone | Europe/Zurich | Default time zone for the scheduler|
-|CustomTagName | scheduler:ec2-startstop | This tag identifies EC2 instances to receive automated actions|
-|CustomRDSTagName | scheduler:rds-startstop | This tag identifies RDS instances to receive automated actions|
-|CloudWatchMetrics| Disabled |  |
-|Regions | all | AWS regions seperated by space(s) where EC2/RDS scheduler operates|
-
-|RDSSupport | Yes| Change to 'No' to disable RDS instance stop/start support|
-
-|S3BucketName | | S3 Bucket name where Lambda zipfile sits|
-
-||  | |
+| Parameter | Default | Possible values | Notes |
+| ------ | ------ | ------ | ------ |
+|Schedule | 1hour | 5minutes, 15minutes, 30minutes, 1hour | Interval to execute the scheduler (See section *Schedule considerations*) |
+|Regions | eu-west-1 | all, comma-separated list of regions | AWS regions to operate in |
+|CustomTagName | scheduler:ec2-startstop | String | Tag name to use on EC2 instances |
+|CustomRDSTagName | scheduler:rds-startstop | String | Tag name to use on RDS instances |
+|DefaultStartTime | '0800' | Time in 24h format enclosed in '' | Default time to start tagged instances |
+|DefaultStopTime | '1800' | Time in 24h format enclosed in '' | Default time to stop tagged instances |
+|DefaultDaysActive| weekdays | all, weekdays, comma-separated list of days (mon, tue, wed, thu, fri, sat, sun), day number (1-31) or Nth day of month (wed/1, mon/3, ...) | Default days to start or stop tagged instances |
+|DefaultTimeZone | Europe/Zurich | utc, Australia/Sydney, Etc/GMT+10, or any timezone supported by the pytz library | Timezone to use |
+|ASGSupport | Yes | Yes, No | Support handling of Auto Scaling Groups (See section *Auto Scaling Groups considerations*) |
+|RDSSupport | Yes | Yes, No | Support RDS instances (See section *RDS considerations*) |
+|CloudWatchMetrics| Yes | Yes, No | Create CloudWatch metrics to track the state of instances (See section *CloudWatch metrics*) |
 
 # How to use it
 
-You can apply custom start and stop parameters to an EC2 or RDS instance which will override the default values you set during initial deployment. To do this, modify the tag value to specify the alternative settings.
+To start/stop EC2 instances on the default schedule, set the following tag on those instances:
+Name: scheduler:ec2-startstop Value: default
 
-The EC2/RDS Scheduler will read tag values, looking for four possible custom parameters in the following order: 
-<start time>; <stop time>; <time zone>; <active day(s)>
+To start/stop RDS instances on the default schedule, set the following tag on those instances:
+Name: scheduler:rds-startstop Value: default
 
-You can sepereate each values with a semicolon or colon on EC2 instances. On RDS instances colon is the only possibility, it doesn't allow entering semicolons as values for tags. The following table gives acceptable input values for each field
+You can also set a custom tag value to EC2 or RDS instances in order to create a specific schedule for them.
 
-|Tag Value Field|Acceptable input values|Scheduled Action/Note |
+The scheduler will read tag values, looking for four possible custom parameters in the following order, separated by colons: 
+StartTime:StopTime:TimeZone:ActiveDays
+
+The following table shows possible values for each field:
+
+| Tag field | Possible values | Scheduled action/note |
 | ------ | ------ | ------ | 
-|start time | none | No action|
-|| 24x7| Start the instance at any time if it is stopped|
-|| default| The instance will start and stop on the default schedule|
-|| true| The instance will start and stop on the default schedule|
-|| HHMM| Time in 24-hour format (Default time zone or timezone specified, with no colon)|
-|stop time | none | No action|
-|| HHMM| Time in 24-hour format (Default time zone or timezone specified, with no colon)|
-|time zone| <empty>| Default scheduler time zone |
-||utc| UTC time zone |
-||Europe/Zurich| Or any pytz library supported time zone value |
-|active day(s)|all| All days |
-||weekdays| From Monday to Friday |
-||sat,1,2| Saturday, 1st and 2nd in each month|
-||sat/2, fri/4| The second Saturday and fourth Friday in each month|
+| StartTime | [empty] or none | No action |
+|| default or true | Start and stop on the default schedule |
+|| 24x7 | Start at any time |
+|| 24x5 | Start at DefaultStartTime on Monday and stop it at DefaultStopTime on Friday |
+|| HHMM | Start at the given time in 24h format |
+| StopTime | [empty] or none | No action |
+|| HHMM | Stop at the given time in 24h format |
+| TimeZone | [empty] | Use default time zone |
+|| utc | Use UTC time zone (case sensitive) |
+|| Europe/Zurich | Use any [pytz library supported time zone](https://stackoverflow.com/questions/13866926/is-there-a-list-of-pytz-timezones) value (case sensitive) |
+| ActiveDays | [empty] | Use default active days |
+|| all | All days |
+|| weekdays | From Monday to Friday |
+|| 01,15 | 1st and 15th day of the month |
+|| mon,fri | Every Monday and Friday |
+|| sat,1,2 | Every Saturday and 1st and 2nd day of the month |
+|| sat/2,fri/4 | Second Saturday and fourth Friday of the month |
 
-# Example Tag Value
+# Example tag values
 
-The following table gives examples of different tag values and the resulting Scheduler actions
+The following table gives examples of different tag values and the resulting scheduler actions
 
-|Example Tag Value|EC2 Scheduler Action|
+| Example Tag Value | EC2 Scheduler Action |
 |------ | ------|
-|24x7 | start RDS/EC2 instance at any time if it is stopped|
-|24x5 | start RDS/EC2 instance at DefaultStartTime on Monday, and stop at DefaultStopTime on Friday (DefaultTimeZone) |
-|24x5;;Europe/Zurich; | start at DefaultStartTime on Monday, and stop DefaultStopTime on Friday (Europe/Zurich timezone)|
-|none | No action|
-|default | The instance will start and stop on the default schedule|
-|true | The instance will start and stop on the default schedule|
-|0800;;;weekdays |Start the instance at 08:00 (Default Timezone) in weekdays if it is stopped|
-|;1700;;weekdays |Stop the instance at 17:00 (Default Timezone) in weekdays if it is running.|
-|0800;1800;utc;all|The instance will start at 0800 hours and stop at 1800 hours on all days|
-|0001;1800;Etc/GMT+1;Mon/1| The instance will start at 0001 hour and stop at 1800 hour (first Monday of every month, Etc/GMT+1 timezone)|
-|1000;1700;utc;weekdays | The instance will start at 1000 hours and stop at 1700 hours Monday through Friday.|
-|1030;1700;utc;mon,tue,fri| The instance will start at 1030 hours and stop at 1700 hours on Monday, Tuesday, and Friday only.|
-|1030;1700;utc;mon,tue,fri,1,3 |The instance will start at 1030 hours and stop at 1700 hours on Monday, Tuesday, and Friday or date 1,3 only.|
-|1030;1700;utc;1 |The instance will start at 1030 hours and stop at 1700 hours on date 1 only.|
-|1030;1700;utc;01,fri | The instance will start at 1030 hours and stop at 1700 hours on date 1 and Friday.|
-|0815;1745;utc;wed,thu |The instance will start at 0815 hours and stop at 1745 hours on Wednesday and Thursday.|
-|none;1800;utc;weekdays| The instance stop at 1800 hours Monday through Friday. |
-|0800;none;utc;weekdays| The instance start at 0800 hours Monday through Friday. |
-|1030;1700;utc;mon,tue,fri,1,3,sat/1|The instance will start at 1030 hours and stop at 1700 hours on Monday, Tuesday, and Friday ,date 1,3 or the first Saturday in every month (utc TimeZone)|
-|1030;1700;;mon,tue,fri,1,3,sat/1|The instance will start at 1030 hours and stop at 1700 hours on Monday, Tuesday, and Friday ,date 1,3 or the first Saturday in every month (Default TimeZone)|
-|1030;1700;Europe/Zurich;mon,tue,fri,1,3,sat/1 | The instance will start at 1030 hours and stop at 1700 hours on Monday, Tuesday, and Friday ,date 1,3 or the first Saturday in every month (Europe/Zurich TimeZone)|
+| [empty] or none | No action. |
+| default or true | Start and stop on the default schedule (default timezone). |
+| 24x7 | Always start. |
+| 24x5 | Start at DefaultStartTime on Monday, and stop at DefaultStopTime on Friday (default timezone). |
+| 24x5;;Europe/Zurich | Start at DefaultStartTime on Monday, and stop at DefaultStopTime on Friday (Europe/Zurich timezone). |
+| 0800 | Start at 08:00 on DefaultDaysActive (default timezone). |
+| ;1800 | Stop at 18:00 on DefaultDaysActive (default timezone). |
+| ;1700;;weekdays | Stop at 17:00 on weekdays (default timezone). |
+| 0800;1800 | Start at 08:00 and stop it at 18:00 on DefaultDaysActive (default timezone) |
+| 0800;1800;Europe/Belgrade | Start at 08:00 and stop it at 18:00 on DefaultDaysActive (Europe/Belgrade timezone) |
+| 0800;1800;utc;all | Start at 08:00 and stop at 18:00 on all days (UTC timezone). |
+| 0000;1800;Etc/GMT+1;Mon/1 | Start at 00:00 and stop at 18:00 on the first Monday of the month (Etc/GMT+1 timezone). |
+| 1000;1700;;weekdays | Start at 10:00 and stop at 17:00 Monday through Friday (default timezone). |
+| 1030;1700;;mon,tue,fri | Start at 10:30 and stop at 17:00 on Monday, Tuesday and Friday only (default timezone). |
+| 1030;1700;;mon,tue,fri,1,3 | Start at 10:30 and stop at 17:00 on Monday, Tuesday, Friday or on the 1st and 3rd day of the month (default timezone). |
+| 1030;1700;;1 | Start at 10:30 and stop at 17:00 on the 1st day of the month (default timezone). |
+| 1030;1700;;5,fri | Start at 10:30 and stop at 17:00 on the 5th day of the month and every Friday (default timezone). |
+| 0815;1745;;wed,thu | Start at 08:15 and stop at 17:45 on Wednesday and Thursday (default timezone). |
+| none;1800;;weekdays | Stop at 18:00 on Monday through Friday (default timezone). |
+| 0800;none;;weekdays | Start at 08:00 on Monday through Friday (default timezone). |
+| 1030;1700;;mon,tue,fri,1,3,sat/1 | Start at 10:30 and stop at 17:00 on every Monday, Tuesday, Friday as well as on the 1st and 3rd day of the month and the first Saturday of the month (default timezone). |
 
+# Schedule considerations
+
+The scheduler acts on time values that fall in the following time range: ((Time of execution) - (Schedule - 1)) to (Time of execution). Have a look at these examples:
+
+- If the schedule is set to 1 hour, instances that have a start time of 13:01 - 14:00 will be started at 14:00.
+- If the schedule is set to 5 minutes, instances that have a start time of 13:01 - 13:05 will be started at 13:05.
+
+This means that all possible time values in tags are handled but the exact time of the start/stop operation depends on the schedule.
+
+Best practice is to only use time values in tags that are a multiple of the configured schedule.
+
+# Auto Scaling Groups considerations
+
+Instances that are member of an Auto Scaling Group are set to Standby before they are stopped and put back InService after they are started. For this to work, the ASG's Min-Value must allow for the instances to be set to Standby. If that's not the case, the scheduler will only stop as much instances as the Min-Value of the ASG allows. For more information have a look at the following documentation: [Temporarily Removing Instances from Your Auto Scaling Group](https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-enter-exit-standby.html)
+
+Also be aware that instances that are automatically launched by an ASG inherit the tags from the ASG. So the best practice to set the scheduler-tag is to set them on the ASG instead of the instances. This way also newly launched instances have the scheduler-tag set.
+
+Best practice for ASGs:
+- Set the scheduler-tag on the ASG and activate "Tag new Instances".
+- If you want the scheduler to start/stop all instances of an ASG, make sure all ASG-members have the scheduler-tag set and the Min-Value of the ASG is set to 0.
+- If you want the scheduler to start/stop all but N instances of an ASG, make sure all ASG-members have the scheduler-tag set and the Min-Value of the ASG is set to N.
+
+# RDS considerations
+
+Not all types of RDS are supported to be started/stopped by the scheduler. Make sure your RDS instance is supported to be started/stopped and check the logs of the scheduler after configuring an RDS to be scheduled. Databases that are in any other state than stopped/available can't be started/stopped.
+
+# CloudWatch metrics
+
+The scheduler creates CloudWatch metrics by default so you can track the state of instances that are started/stopped by the scheduler. A metric value of 1 means the instance is running, a value of 0 means it's stopped.
+
+# Logs
+
+The scheduler writes logs about the actions performed. You can find the logs under CloudWatch -> Logs.
 
 # Author
 - Initial version: AWS provided
 - Second version by: Eric Ho (https://github.com/hbwork/ec2-scheduler)
-- Current version by: Pablo Pinés León
-Last update: October 17, 2018
+- Third version by: Pablo Pinés León
+- Current version by: JSC
+
+Last update: April 16, 2019
 
 ***
 
