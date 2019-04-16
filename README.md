@@ -6,7 +6,7 @@ This is a solution to enable the scheduling of EC2 and RDS instances, so that th
 
 This file contains the lambda function code written in Python 3.7.
 
-# EC2RDS-scheduler.yaml
+# EC2RDS-Scheduler.yaml
 
 This file is a CloudFormation template that enables the configuration and usage of the solution. It also creates a lambda function.
 
@@ -137,6 +137,7 @@ The scheduler writes logs about the actions performed. You can find the logs und
 - Second version by: Eric Ho (https://github.com/hbwork/ec2-scheduler)
 - Third version by: Pablo Pinés León
 - Current version by: JSC
+
 Last update: April 16, 2019
 
 ***
