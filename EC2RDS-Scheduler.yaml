@@ -11,22 +11,10 @@ Parameters:
     - 15minutes
     - 30minutes
     - 1hour
-  DefaultStartTime:
-    Description: "Default time to start tagged instances (enclose in '')."
+  Regions:
+    Description: "AWS regions to operate in. Possible values (comma-separated): all, list of regions."
     Type: String
-    Default: "'0800'"
-  DefaultStopTime:
-    Description: "Default time to stop tagged instances (enclose in '')."
-    Type: String
-    Default: "'1800'"
-  DefaultDaysActive:
-    Description: "Default days to start or stop tagged instances. Possible values (comma-separated): all, weekdays, or any combination of days (mon, tue, wed, thu, fri, sat, sun)."
-    Type: String
-    Default: "weekdays"
-  DefaultTimeZone:
-    Description: "Timezone to use. Possible values: utc, Australia/Sydney, Etc/GMT+10, or any timezone supported by the pytz library."
-    Type: String
-    Default: Europe/Zurich
+    Default: eu-west-1
   CustomTagName:
     Description: "Tag name to use on EC2 instances."
     Type: String
@@ -35,24 +23,24 @@ Parameters:
     Description: "Tag name to use on RDS instances."
     Type: String
     Default: scheduler:rds-startstop
-  CloudWatchMetrics:
-    Description: "Create CloudWatch metrics to track the state of instances."
+  DefaultStartTime:
+    Description: "Default time to start tagged instances (enclosed in '')."
     Type: String
-    Default: 'No'
-    AllowedValues:
-    - 'Yes'
-    - 'No'
-  Regions:
-    Description: "AWS regions to operate in. Possible values (comma-separated): all, list of regions."
+    Default: "'0800'"
+    AllowedPattern: '\x27\d{4}\x27'
+  DefaultStopTime:
+    Description: "Default time to stop tagged instances (enclosed in '')."
     Type: String
-    Default: eu-west-1
-  RDSSupport:
-    Description: "Support RDS instances."
+    Default: "'1800'"
+    AllowedPattern: '\x27\d{4}\x27'
+  DefaultDaysActive:
+    Description: "Default days to start or stop tagged instances. Possible values (comma-separated): all, weekdays, comma-separated list of days (mon, tue, wed, thu, fri, sat, sun), day number (1-31) or Nth day of month (wed/1, mon/3, ...)."
     Type: String
-    Default: 'Yes'
-    AllowedValues:
-    - 'Yes'
-    - 'No'
+    Default: "weekdays"
+  DefaultTimeZone:
+    Description: "Timezone to use. Possible values: utc, Australia/Sydney, Etc/GMT+10, or any timezone supported by the pytz library (case sensitive)."
+    Type: String
+    Default: Europe/Zurich
   ASGSupport:
     Description: "Support handling of Auto Scaling Groups. The ASGs Min-Value must allow for the instances to be set to standby, see documentation for more info."
     Type: String
@@ -60,6 +48,21 @@ Parameters:
     AllowedValues:
     - 'Yes'
     - 'No'
+  RDSSupport:
+    Description: "Support handling RDS instances."
+    Type: String
+    Default: 'Yes'
+    AllowedValues:
+    - 'Yes'
+    - 'No'
+  CloudWatchMetrics:
+    Description: "Create CloudWatch metrics to track the state of instances."
+    Type: String
+    Default: 'Yes'
+    AllowedValues:
+    - 'Yes'
+    - 'No'
+
 Mappings:
   Schedule:
     Time:
@@ -67,6 +70,7 @@ Mappings:
       15minutes: cron(0/15 * * * ? *)
       30minutes: cron(0/30 * * * ? *)
       1hour: cron(0 * * * ? *)
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -96,6 +100,7 @@ Metadata:
         default: CloudWatch metrics
       Parameters:
       - CloudWatchMetrics
+
 Resources:
   Role:
     Type: AWS::IAM::Role
@@ -141,7 +146,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: ec2rds-scheduler.lambda_handler
-      Timeout: 300
+      Timeout: 299
       MemorySize: 256
       Runtime:  python3.7
       CodeUri: ec2rds-scheduler.zip
@@ -159,10 +164,10 @@ Resources:
               "CustomRDSTagName":"${CustomRDSTagName}",
               "DefaultStartTime":"${DefaultStartTime}",
               "DefaultStopTime":"${DefaultStopTime}",
-              "DefaultTimeZone":"${DefaultTimeZone}",
               "DefaultDaysActive":"${DefaultDaysActive}",
-              "RDSSupport":"${RDSSupport}",
+              "DefaultTimeZone":"${DefaultTimeZone}",
               "ASGSupport":"${ASGSupport}",
+              "RDSSupport":"${RDSSupport}",
               "CloudWatchMetrics":"${CloudWatchMetrics}"
               }'
   CodeBuildLogGroup:
