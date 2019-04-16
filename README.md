@@ -2,13 +2,13 @@
 
 This is a solution to enable the scheduling of EC2 and RDS instances, so that they can be started and stopped automatically. It is deployed via [CodePipeline](https://docs.aws.amazon.com/codepipeline/index.html) and composed of the following files:
 
-# ec2rds-scheduler.yaml
-
-This file is a CloudFormation template that enables the configuration and usage of the solution. It also creates a lambda function.
-
 # code/ec2rds-scheduler.py
 
 This file contains the lambda function code written in Python 3.7.
+
+# EC2RDS-scheduler.yaml
+
+This file is a CloudFormation template that enables the configuration and usage of the solution. It also creates a lambda function.
 
 # buildspec.yaml
 This file contains the [build specification reference](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html) for CodeBuild.
