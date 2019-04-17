@@ -12,12 +12,11 @@
 ######################################################################################################################
 
 import boto3
-import datetime
-import json
 import time
-from collections import defaultdict
+import datetime
 import re
 import pytz
+from collections import defaultdict
 
 # Function to push CloudWatch metrics
 def putCloudWatchMetric(region, instance_id, instance_state):
@@ -52,17 +51,13 @@ def scheduler_action(tagValue):
     # nth weekdays Interpreter
     nthweekdays=re.compile('\w{3}/\d{1}')
     
-    # Split out Tag & Set Variables to default
-    default1 = 'default'
-    default2 = 'true'
-    
     # Set default values
     Action = 'None'
     isValidTimeZone = True
     isActiveDay = False
     
     # Get tag values
-    ptag = tagValue.replace(':',';').split(';')
+    ptag = tagValue.replace(';',':').split(':')
     
     # Get default time values
     startTime = defaultStartTime
@@ -70,14 +65,14 @@ def scheduler_action(tagValue):
     timeZone = defaultTimeZone
     daysActive = defaultDaysActive
 
-    # Check if tag is empty
-    if ptag[0] == '' and len(ptag) == 1:
+    # Check if tag is empty or none
+    if (ptag[0] == '' or ptag[0] == 'none') and len(ptag) == 1:
         return 'None'
 
     # Get startTime
     if len(ptag) >= 1:
         # Check for default values
-        if ptag[0].lower() not in (default1, default2):
+        if ptag[0].lower() not in ('default', 'true'):
             startTime = ptag[0]
             # Clear default stopTime if stopTime it's not defined in tag
             if len(ptag) == 1:
