@@ -147,6 +147,7 @@ The scheduler writes logs about the actions performed. You can find the logs und
 - Initial version: AWS provided
 - Second version by: Eric Ho (https://github.com/hbwork/ec2-scheduler)
 - Third version by: Pablo Pinés León
+- Fourth version by : Jürg Schweingruber
 - Current version by: JSC
 
 Last update: April 16, 2019
